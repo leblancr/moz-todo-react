@@ -4,6 +4,7 @@ function Form(props) {
   // variable and function to set variable
   const [name, setName] = useState("");  // initial value
 
+  // updates the state variable everytime a key is pressed
   function handleChange() {
     setName(event.target.value);
     //console.log(name)
@@ -25,11 +26,6 @@ function Form(props) {
   
   return (
     <form onSubmit={handleSubmit}>
-      <h2 className="label-wrapper">
-        <label htmlFor="new-todo-input" className="label__lg">
-          What needs to be done?
-        </label>
-      </h2>
       <input
         type="text"
         id="new-todo-input"

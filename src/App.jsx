@@ -1,13 +1,60 @@
 import Form from "./components/Form";
 import FilterButton from "./components/FilterButton";
 import Todo from "./components/Todo";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
+const FILTER_MAP = {
+  All: () => true,
+  Active: (task) => !task.completed,
+  Completed: (task) => task.completed,
+};
+const FILTER_NAMES = Object.keys(FILTER_MAP);
+
+// the function that main calls
 function App(props) {
   // props = DATA from main.jsx
   // <App tasks={DATA} />
   // console.log(props)
-  const [tasks, setTasks] = useState(props.tasks);  // list state variable
+  const [tasks, setTasks] = useState(props.tasks);  // state variable is a list
+  const [filter, setFilter] = useState("All");  // All, Active or Completed
+
+  // map takes an array and returns a different array
+  // (task) => task.name this is a function
+  // map each task to a function that returns Todo object
+  // turns DATA from main.jsx into Todo objects
+  const taskList = tasks
+    .filter(FILTER_MAP[filter])  // All, Active or Completed
+    .map((task) => (
+      <Todo
+        id={task.id}
+        name={task.name}
+        completed={task.completed}
+        key={task.id}
+        toggleTaskCompleted={toggleTaskCompleted}
+        deleteTask={deleteTask}
+        editTask={editTask}
+      />
+    )
+  );
+
+  //
+  const filterList = FILTER_NAMES.map((name) => (
+    <FilterButton
+      key={name}
+      name={name}
+      isPressed={name === filter}  // filter is state variable
+      setFilter={setFilter}  // callback function
+    />
+  ));
+
 
   // Here, we define an updatedTasks constant that maps over the
   // original tasks array. If the task's id property matches the
@@ -25,28 +72,9 @@ function App(props) {
       }
       return task;
     }); // map ends here
+    console.log(updatedTasks)
     setTasks(updatedTasks);  // new list with one item toggled
   }
-
-  function deleteTask(id) {
-    const remainingTasks = tasks.filter((task) => id !== task.id);
-    setTasks(remainingTasks);
-  }
-
-  // map takes an array and returns a different array
-  // (task) => task.name this is a function
-  // map each task to a function that returns Todo object
-  const taskList = tasks?.map((task) => (
-    <Todo
-      id={task.id}
-      name={task.name}
-      completed={task.completed}
-      key={task.id}
-      toggleTaskCompleted={toggleTaskCompleted}
-      deleteTask={deleteTask}
-    />
-    )
-  );
 
   function addTask(name) {
     console.log('tasks', tasks)
@@ -54,6 +82,24 @@ function App(props) {
     console.log('lastItem', lastItem)
     const newTask = { id: lastItem['id'] + 1, name, completed: false };
     setTasks([...tasks, newTask]);  // spread syntax
+  }
+
+  function deleteTask(id) {
+    const remainingTasks = tasks.filter((task) => id !== task.id);
+    setTasks(remainingTasks);
+  }
+
+  function editTask(id, newName) {
+    const editedTaskList = tasks.map((task) => {
+      // if this task has the same ID as the edited task
+      if (id === task.id) {
+        // Copy the task and update its name
+        return { ...task, name: newName };
+      }
+      // Return the original task if it's not the edited task
+      return task;
+    });
+    setTasks(editedTaskList);
   }
 
   // map instead of for loop
@@ -70,17 +116,22 @@ function App(props) {
 
   const tasksNoun = taskList.length !== 1 ? "tasks" : "task";
   const headingText = `${taskList.length} ${tasksNoun} remaining`;
+  const listHeadingRef = useRef(null);
+  const prevTaskLength = usePrevious(tasks.length);
+
+  useEffect(() => {
+    if (tasks.length < prevTaskLength) {
+      listHeadingRef.current.focus();
+    }
+  }, [tasks.length, prevTaskLength]);
 
   return (
     <div className="todoapp stack-large">
-      <h1>Todo</h1>
       <Form addTask={addTask} />
       <div className="filters btn-group stack-exception">
-        <FilterButton />
-        <FilterButton />
-        <FilterButton />
+        {filterList}
       </div>
-      <h2 id="list-heading">{headingText}</h2>
+      <h2 id="list-heading" tabIndex="-1" ref={listHeadingRef} >{headingText}</h2>
       <ul
         role="list"
         className="todo-list stack-large stack-exception"
