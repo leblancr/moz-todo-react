@@ -2,15 +2,16 @@
 // has the checkbox, edit and delete buttons for each item
 import { useState, useEffect, useRef } from "react";
 
-function usePrevious(value) {
+function usePrevious(value: boolean | undefined) {
   const ref = useRef();
   useEffect(() => {
-    ref.current = value;
+    // @ts-ignore
+      ref.current = value;
   });
   return ref.current;
 }
 
-function Todo(props) {
+function Todo(props: { name: unknown; editTask: (arg0: any, arg1: any) => void; id: any; completed: any; toggleTaskCompleted: (arg0: any) => any; deleteTask: (arg0: any) => any; }) {
   const [isEditing, setEditing] = useState(false);
   const [newName, setNewName] = useState(props.name);
   const editFieldRef = useRef(null);
@@ -23,15 +24,16 @@ function Todo(props) {
       setNewName(props.name)
       editFieldRef.current?.focus();
     } else if (wasEditing && !isEditing) {
-      editButtonRef.current.focus();
+      // @ts-ignore
+        editButtonRef.current.focus();
     }
   }, [wasEditing, isEditing, props.name]); // Run effect when editing state changes
 
-  function handleChange(e) {
+  function handleChange(e: { target: { value: unknown; }; }) {
     setNewName(e.target.value);
   }
 
-  function handleSubmit(e) {
+  function handleSubmit(e: { preventDefault: () => void; }) {
     e.preventDefault();
     props.editTask(props.id, newName);
     setNewName("");
